@@ -106,6 +106,21 @@ def get_birds_samples_from_dict_folders(directory_path, birds_folders, audio_dur
     return birds_samples
 
 
+def split_data_dict(birds_samples_dict, data_split=0.75):
+    train_birds_samples_dict = {}
+    test_birds_samples_dict = {}
+
+    for one_bird_folder, files in birds_samples_dict.items():
+        # Get the number of data_split % of the data in files
+        cutoff_index = int(len(files) * data_split)
+
+        # Give split_data % of the data to the train dict, the rest to the test dict
+        train_birds_samples_dict[one_bird_folder] = files[:cutoff_index]
+        test_birds_samples_dict[one_bird_folder] = files[cutoff_index:]
+
+    return train_birds_samples_dict, test_birds_samples_dict
+
+
 def save_audio_samples_from_dict(birds_samples, file_path):
     # Save the dictionary to a pickle file
     with open(file_path + ".pkl", 'wb') as f:
