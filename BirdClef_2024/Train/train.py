@@ -1,13 +1,13 @@
-from numpy.distutils.command.config import config
-
 from Model import model
 import numpy as np
 import Model.model_config as model_config
 
 
-def start_training(train_dataset, test_dataset, learning_rate, n_epochs, batch_size):
+def start_training(train_dataset, test_dataset, learning_rate, weight_decay, n_epochs, batch_size):
 
     """ Samples """
+    n_training_data = len(train_dataset.get_input_samples())
+    print("Number of training data : ", n_training_data)
     input_feature_size = len(train_dataset.get_item(0)[0])
     output_size = len(train_dataset.get_target_values()[0])
 
@@ -17,6 +17,7 @@ def start_training(train_dataset, test_dataset, learning_rate, n_epochs, batch_s
         input_feature_size=input_feature_size,
         n_neurons_by_layer=[4, output_size],
         learning_rate=learning_rate,
+        weight_decay=weight_decay,
         init_function=model_config.random_init,
         act_func="sigmoid")
 
@@ -29,7 +30,9 @@ def start_training(train_dataset, test_dataset, learning_rate, n_epochs, batch_s
     print("Expected values : ", train_dataset.get_target_values()[40])
 
     # Train the NN
-    fullyConnectedNN.train(n_epochs, batch_size, train_dataset.get_input_samples(), train_dataset.get_target_values())
+    fullyConnectedNN.train_and_test(
+        n_epochs, batch_size, train_dataset.get_input_samples(), train_dataset.get_target_values(),
+                           test_dataset.get_input_samples(), train_dataset.get_target_values())
 
     # Print result after training (I test the two classes)
     final_pred = fullyConnectedNN.forward_propagation(train_dataset.get_input_samples())

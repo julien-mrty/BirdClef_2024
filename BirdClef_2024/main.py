@@ -20,9 +20,10 @@ data_split = 0.75
 
 
 """ Hyperparameters """
-learning_rate = 0.1
-n_epochs = 100
-batch_size = 8
+learning_rate = 1e-1
+weight_decay = 1e-6
+n_epochs = 1000
+batch_size = 80
 max_audio_duration = 5000 # Max duration of the files in milliseconds
 
 
@@ -52,6 +53,5 @@ if __name__ == '__main__':
     print("=========================== Datasets loaded.\n")
 
     print("=========================== Training Started...")
-    train.start_training(train_dataset, test_dataset, learning_rate, n_epochs, batch_size)
+    train.start_training(train_dataset, test_dataset, learning_rate, weight_decay, n_epochs, batch_size)
     print("=========================== End of training.\n")
-

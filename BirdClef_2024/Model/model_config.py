@@ -38,12 +38,12 @@ def softmax_regression(z):
 
     return softmax_output
 
-
+# Layers with sigmoid activation functions
 def he_init(num_neurons_previous_layer, num_neurons_current_layer):
     stddev = np.sqrt(2. / num_neurons_previous_layer)
     return np.random.randn(num_neurons_current_layer, num_neurons_previous_layer) * stddev
 
-
+# Layers using tanh activation functions
 def xavier_init(num_neurons_previous_layer, num_neurons_current_layer):
     stddev = np.sqrt(1. / num_neurons_previous_layer)
     return np.random.randn(num_neurons_current_layer, num_neurons_previous_layer) * stddev

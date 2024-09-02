@@ -12,3 +12,11 @@ def my_transpose(output):
         raise ValueError("Output should be a 1D or 2D array.")
 
     return output
+
+
+def compute_least_squared_cost_function(model_hypothesis, target_values):
+    # Compute the difference, square it, sum over all features, and take the mean
+    diff = model_hypothesis - target_values
+    loss = 1 / 2 * np.mean(np.sum(diff ** 2, axis=1))
+
+    return loss

@@ -60,7 +60,7 @@ class LayerFactory:
 
 
 class ClassificationFullyConnectedNeuralNetwork:
-    def __init__(self, input_feature_size, n_neurons_by_layer, learning_rate, init_function, act_func="relu"):
+    def __init__(self, input_feature_size, n_neurons_by_layer, learning_rate, weight_decay, init_function, act_func="relu"):
         # Hyperparameters
         self.learning_rate = learning_rate
 
@@ -74,6 +74,13 @@ class ClassificationFullyConnectedNeuralNetwork:
 
         # Get activation functions
         self.activation_function, self.activation_function_prime = ActivationFunctions.get(act_func)
+
+        # Regularization parameter
+        self.weight_decay = weight_decay
+
+        # Loss computation
+        self.train_loss_values = []
+        self.test_loss_values = []
 
         # Initialization of NN layers
         self.initialize_layers()
@@ -132,23 +139,63 @@ class ClassificationFullyConnectedNeuralNetwork:
             gradient_bias = np.sum(deltas[i], axis=1, keepdims=True) / n
 
             # Update the weights and biases
-            layer.weights -= self.learning_rate * gradient_weight
+            layer.weights -= self.learning_rate * (gradient_weight + self.weight_decay * layer.weights)
             layer.bias -= self.learning_rate * gradient_bias
 
-    def train_one_epoch(self, batch_size, input_feature, target_output):
-        n = input_feature.shape[0]
-        if n != target_output.shape[0]:
-            raise ValueError(f"Input and target do not match: {n} vs {target_output.shape[0]}.")
+    def train_one_epoch(self, n_epochs, current_epoch, batch_size, input_feature, target_output):
+        n_samples = input_feature.shape[0]
 
-        for i in range(0, n, batch_size):
+        if n_samples != target_output.shape[0]:
+            raise ValueError(f"Input and target do not match: {n_samples} vs {target_output.shape[0]}.")
+
+        for batch_number, i in enumerate(range(0, n_samples, batch_size), start=1):
             # Slice the batches
             batch_input = input_feature[i:i + batch_size, :]
             batch_target = target_output[i:i + batch_size]
 
             # Perform forward propagation and backpropagation on the current batch
-            self.forward_propagation(batch_input)
+            model_hypothesis = self.forward_propagation(batch_input)
             self.backpropagation(batch_input, batch_target)
 
-    def train(self, number_of_epochs, batch_size, input_feature, target_output):
-        for _ in range(number_of_epochs):
-            self.train_one_epoch(batch_size, input_feature, target_output)
+            # Compute and store the loss for the current batch
+            self.train_loss_values.append(tools.compute_least_squared_cost_function(model_hypothesis, batch_target))
+
+            # Print the training logs
+            self.print_training_logs(n_samples, n_epochs, current_epoch, batch_size, batch_number)
+
+    def test_model(self, batch_size, input_feature, target_output):
+        n_samples = input_feature.shape[0]
+
+        if n_samples != target_output.shape[0]:
+            raise ValueError(f"Input and target do not match: {n_samples} vs {target_output.shape[0]}.")
+
+        for batch_number, i in enumerate(range(0, n_samples, batch_size), start=1):
+            # Slice the batches
+            batch_input = input_feature[i:i + batch_size, :]
+            batch_target = target_output[i:i + batch_size]
+
+            # Perform forward propagation and backpropagation on the current batch
+            model_hypothesis = self.forward_propagation(batch_input)
+
+            # Compute and store the loss for the current batch
+            self.test_loss_values.append(tools.compute_least_squared_cost_function(model_hypothesis, batch_target))
+
+            # Print the training logs
+            self.print_test_logs(n_samples, batch_size, batch_number)
+
+    def train_and_test(self, n_epochs, batch_size, train_input_feature, train_target_output, test_input_feature, test_target_output):
+        for epoch_number in range(n_epochs):
+            self.train_one_epoch(n_epochs, epoch_number, batch_size, train_input_feature, train_target_output)
+            self.test_model(batch_size, test_input_feature, test_target_output)
+
+    def print_training_logs(self, n_samples, n_epochs, current_epoch, batch_size, batch_number):
+        n_batch = int(n_samples / batch_size)
+        avg_loss = np.mean(self.train_loss_values)
+
+        print(f"TRAIN : Epoch : {current_epoch + 1}/{n_epochs}, Batch : {batch_number}/{n_batch}, Last loss : {self.train_loss_values[-1]}Loss : {avg_loss}")
+
+    def print_test_logs(self, n_samples, batch_size, batch_number):
+        n_batch = int(n_samples / batch_size)
+        avg_loss = np.mean(self.test_loss_values)
+
+        print(f"======== TEST : Batch : {batch_number}/{n_batch}, Last loss : {self.test_loss_values[-1]}, Loss average : {avg_loss}")
