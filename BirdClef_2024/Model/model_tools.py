@@ -1,4 +1,6 @@
 import numpy as np
+from datetime import datetime
+import Model.model as model
 
 
 def my_transpose(output):
@@ -20,3 +22,33 @@ def compute_least_squared_cost_function(model_hypothesis, target_values):
     loss = 1 / 2 * np.mean(np.sum(diff ** 2, axis=1))
 
     return loss
+
+
+def generate_model_name(name, learning_rate, weight_decay):
+    # Get the current date and time
+    current_datetime = datetime.now()
+
+    # Extract just the date
+    current_date = current_datetime.date()
+
+    full_name = str(current_date) + "__name=" + name + "__lr=" + str(learning_rate) + "__wd=" + str(weight_decay)
+
+    return full_name
+
+
+def create_classification_fully_connected_nn(model_name, train_dataset, learning_rate, weight_decay, init_function, act_func):
+    input_feature_size = len(train_dataset.get_item(0)[0])
+    output_size = len(train_dataset.get_target_values()[0])
+
+    my_model = model.ClassificationFullyConnectedNeuralNetwork(
+        model_name=model_name,
+        input_feature_size=input_feature_size,
+        n_neurons_by_layer=[4, output_size],
+        learning_rate=learning_rate,
+        weight_decay=weight_decay,
+        init_function=init_function,
+        act_func=act_func)
+
+    print("=========================== Neural network created.\n")
+
+    return my_model

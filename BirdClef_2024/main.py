@@ -1,22 +1,23 @@
-from os.path import split
-
-from Data import dataset
 from pathlib import Path
 from Data import data_pre_processing
 from Train import train
+import Model.model_tools as model_tools
+import Model.model_config as model_config
+import Train.train_tools as train_tools
 
 
 """ Directories paths and files names """
 directory_raw_train_audio = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/train_audio"
 train_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/train_birds_2_sample_20_dict"
 test_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/test_birds_2_sample_20_dict"
-
+directory_training_result_save = "Training_results/"
+model_name = "Model01"
 
 """ Data management """
 # Limits for the tests
 birds_folder_limit = 2
 samples_by_bird_limit = 10
-data_split = 0.75
+data_train_test_split = 0.75
 
 
 """ Hyperparameters """
@@ -25,33 +26,24 @@ weight_decay = 1e-6
 n_epochs = 1000
 batch_size = 80
 max_audio_duration = 5000 # Max duration of the files in milliseconds
+init_function = model_config.random_init
+act_func = "sigmoid"
 
 
 if __name__ == '__main__':
-    train_sample_path = Path(train_birds_sample_dict_save + ".pkl")
-    test_sample_path = Path(test_birds_sample_dict_save + ".pkl")
+    """ Data pre-processing """
+    data_pre_processing.start_data_preprocessing(train_birds_sample_dict_save, test_birds_sample_dict_save,
+                                                 directory_raw_train_audio, max_audio_duration, birds_folder_limit,
+                                                 samples_by_bird_limit, data_train_test_split)
 
-    # The process of loading and transforming data is long. Save the files after doing so
-    if not (train_sample_path.exists()) or not(test_sample_path.exists()):
-        print("=========================== Data preprocessing in progress...")
-        # Get dictionary containing all the samples for each bird in the directory
-        birds_samples_dict = data_pre_processing.get_birds_samples(directory_raw_train_audio, max_audio_duration, birds_folder_limit,
-                                               samples_by_bird_limit)
+    """ Datasets loading """
+    train_dataset, test_dataset = train_tools.load_datasets(train_birds_sample_dict_save, test_birds_sample_dict_save)
 
-        # Split the initial dictionary into train and test dictionary
-        train_birds_samples_dict, test_birds_samples_dict = data_pre_processing.split_data_dict(birds_samples_dict, data_split)
+    """ Neural network initialization """
+    model = model_tools.create_classification_fully_connected_nn(model_name, train_dataset, learning_rate, weight_decay,
+                                                                 init_function, act_func)
 
-        # Save the train and test dictionary
-        data_pre_processing.save_audio_samples_from_dict(train_birds_samples_dict, train_birds_sample_dict_save)
-        data_pre_processing.save_audio_samples_from_dict(test_birds_samples_dict, test_birds_sample_dict_save)
-        print("=========================== Data preprocessing done.\n")
+    """ Training """
+    train.start_training(model, train_dataset, test_dataset, n_epochs, batch_size, directory_training_result_save)
 
-    print("=========================== Loading datasets...")
-    # Use the pre-processed data in the datasets split in train and test
-    train_dataset = dataset.BirdDataset(train_birds_sample_dict_save)
-    test_dataset = dataset.BirdDataset(train_birds_sample_dict_save)
-    print("=========================== Datasets loaded.\n")
 
-    print("=========================== Training Started...")
-    train.start_training(train_dataset, test_dataset, learning_rate, weight_decay, n_epochs, batch_size)
-    print("=========================== End of training.\n")

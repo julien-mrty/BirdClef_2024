@@ -1,6 +1,7 @@
 import numpy as np
 import Model.model_tools as tools
 import Model.model_config as config_func
+import math
 
 
 #np.random.seed(42)  # For reproducibility
@@ -60,7 +61,9 @@ class LayerFactory:
 
 
 class ClassificationFullyConnectedNeuralNetwork:
-    def __init__(self, input_feature_size, n_neurons_by_layer, learning_rate, weight_decay, init_function, act_func="relu"):
+    def __init__(self, model_name, input_feature_size, n_neurons_by_layer, learning_rate, weight_decay, init_function, act_func="relu"):
+        self.model_name = tools.generate_model_name(model_name, learning_rate, weight_decay)
+
         # Hyperparameters
         self.learning_rate = learning_rate
 
@@ -79,8 +82,8 @@ class ClassificationFullyConnectedNeuralNetwork:
         self.weight_decay = weight_decay
 
         # Loss computation
-        self.train_loss_values = []
-        self.test_loss_values = []
+        self.train_loss_coordinates = []
+        self.test_loss_coordinates = []
 
         # Initialization of NN layers
         self.initialize_layers()
@@ -158,12 +161,14 @@ class ClassificationFullyConnectedNeuralNetwork:
             self.backpropagation(batch_input, batch_target)
 
             # Compute and store the loss for the current batch
-            self.train_loss_values.append(tools.compute_least_squared_cost_function(model_hypothesis, batch_target))
+            loss = tools.compute_least_squared_cost_function(model_hypothesis, batch_target)
+            tuple_coordinates = (loss, current_epoch)
+            self.train_loss_coordinates.append(tuple_coordinates)
 
             # Print the training logs
             self.print_training_logs(n_samples, n_epochs, current_epoch, batch_size, batch_number)
 
-    def test_model(self, batch_size, input_feature, target_output):
+    def test_model(self, current_epoch, batch_size, input_feature, target_output):
         n_samples = input_feature.shape[0]
 
         if n_samples != target_output.shape[0]:
@@ -178,7 +183,9 @@ class ClassificationFullyConnectedNeuralNetwork:
             model_hypothesis = self.forward_propagation(batch_input)
 
             # Compute and store the loss for the current batch
-            self.test_loss_values.append(tools.compute_least_squared_cost_function(model_hypothesis, batch_target))
+            loss = tools.compute_least_squared_cost_function(model_hypothesis, batch_target)
+            tuple_coordinates = (loss, current_epoch)
+            self.test_loss_coordinates.append(tuple_coordinates)
 
             # Print the training logs
             self.print_test_logs(n_samples, batch_size, batch_number)
@@ -186,16 +193,16 @@ class ClassificationFullyConnectedNeuralNetwork:
     def train_and_test(self, n_epochs, batch_size, train_input_feature, train_target_output, test_input_feature, test_target_output):
         for epoch_number in range(n_epochs):
             self.train_one_epoch(n_epochs, epoch_number, batch_size, train_input_feature, train_target_output)
-            self.test_model(batch_size, test_input_feature, test_target_output)
+            self.test_model(epoch_number, batch_size, test_input_feature, test_target_output)
 
     def print_training_logs(self, n_samples, n_epochs, current_epoch, batch_size, batch_number):
-        n_batch = int(n_samples / batch_size)
-        avg_loss = np.mean(self.train_loss_values)
+        n_batch = math.ceil(n_samples / batch_size)
+        avg_loss = np.mean(self.train_loss_coordinates)
 
-        print(f"TRAIN : Epoch : {current_epoch + 1}/{n_epochs}, Batch : {batch_number}/{n_batch}, Last loss : {self.train_loss_values[-1]}Loss : {avg_loss}")
+        print(f"TRAIN : Epoch : {current_epoch + 1}/{n_epochs}, Batch : {batch_number}/{n_batch}, Last loss : {self.train_loss_coordinates[-1][0]}Loss : {avg_loss}")
 
     def print_test_logs(self, n_samples, batch_size, batch_number):
-        n_batch = int(n_samples / batch_size)
-        avg_loss = np.mean(self.test_loss_values)
+        n_batch = math.ceil(n_samples / batch_size)
+        avg_loss = np.mean(self.test_loss_coordinates)
 
-        print(f"======== TEST : Batch : {batch_number}/{n_batch}, Last loss : {self.test_loss_values[-1]}, Loss average : {avg_loss}")
+        print(f"======== TEST : Batch : {batch_number}/{n_batch}, Last loss : {self.test_loss_coordinates[-1][0]}, Loss average : {avg_loss}")

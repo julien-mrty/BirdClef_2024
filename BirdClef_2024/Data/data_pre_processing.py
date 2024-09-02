@@ -3,7 +3,30 @@ from pydub import AudioSegment
 import numpy as np
 import itertools
 import pickle
+from pathlib import Path
 
+
+def start_data_preprocessing(train_birds_sample_dict_save, test_birds_sample_dict_save, directory_raw_train_audio,
+                             max_audio_duration, birds_folder_limit, samples_by_bird_limit, data_train_test_split):
+
+    train_sample_path = Path(train_birds_sample_dict_save + ".pkl")
+    test_sample_path = Path(test_birds_sample_dict_save + ".pkl")
+
+    # The process of loading and transforming data is long. Save the files after doing so
+    if not (train_sample_path.exists()) or not (test_sample_path.exists()):
+        print("=========================== Data preprocessing in progress...")
+        # Get dictionary containing all the samples for each bird in the directory
+        birds_samples_dict = get_birds_samples(directory_raw_train_audio, max_audio_duration,
+                                                                   birds_folder_limit,
+                                                                   samples_by_bird_limit)
+
+        # Split the initial dictionary into train and test dictionary
+        train_birds_samples_dict, test_birds_samples_dict = split_data_dict(birds_samples_dict, data_train_test_split)
+
+        # Save the train and test dictionary
+        save_audio_samples_from_dict(train_birds_samples_dict, train_birds_sample_dict_save)
+        save_audio_samples_from_dict(test_birds_samples_dict, test_birds_sample_dict_save)
+        print("=========================== Data preprocessing done.\n")
 
 def get_birds_samples(directory_path, max_audio_duration, birds_folder_limit=np.inf, samples_by_bird_limit=np.inf):
     # Dictionary to hold subfolders of the birds and the names of their audios
