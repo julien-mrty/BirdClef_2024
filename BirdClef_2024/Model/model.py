@@ -62,7 +62,7 @@ class LayerFactory:
 
 class ClassificationFullyConnectedNeuralNetwork:
     def __init__(self, model_name, input_feature_size, n_neurons_by_layer, learning_rate, weight_decay, init_function, act_func="relu"):
-        self.model_name = tools.generate_model_name(model_name, learning_rate, weight_decay)
+        self.name = tools.generate_model_name(model_name, learning_rate, weight_decay)
 
         # Hyperparameters
         self.learning_rate = learning_rate

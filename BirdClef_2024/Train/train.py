@@ -4,7 +4,7 @@ import Model.model_config as model_config
 import Train.train_tools as train_tools
 
 
-def start_training(model, train_dataset, test_dataset, n_epochs, batch_size, directory_training_result_save):
+def start_training(model, train_dataset, test_dataset, n_epochs, batch_size, directory_training_result_save, directory_model_save):
 
     print("=========================== Training Started...")
 
@@ -41,6 +41,8 @@ def start_training(model, train_dataset, test_dataset, n_epochs, batch_size, dir
     train_tools.save_training_logs(model, directory_training_result_save)
 
     # Plot the loss values recorded
-    train_tools.plot_loss_records(directory_training_result_save, model)
+    train_tools.plot_loss_records(directory_training_result_save, model.name)
 
+    # Save the model
+    train_tools.save_model(directory_model_save, model)
     print("=========================== End of training.\n")
