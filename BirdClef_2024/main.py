@@ -1,4 +1,7 @@
 from pathlib import Path
+
+import numpy as np
+
 from Data import data_pre_processing
 from Train import train
 import Model.model_tools as model_tools
@@ -8,17 +11,17 @@ import Train.train_tools as train_tools
 
 """ Directories paths and files names """
 directory_raw_train_audio = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/train_audio"
-train_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/train_birds_2_sample_20_dict"
-test_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/test_birds_2_sample_20_dict"
+train_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/train_birds_5_sample_all_dict"
+test_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/test_birds_5_sample_all_dict"
 directory_training_result_save = "Training_results/Data/"
 directory_model_save = "Training_results/Models/"
-model_name = "Model01"
+model_name = "Model01_5_birds"
 
 
 """ Data management """
 # Limits for the tests
-birds_folder_limit = 2
-samples_by_bird_limit = 10
+birds_folder_limit = 5
+samples_by_bird_limit = 1000
 data_train_test_split = 0.75
 
 
@@ -26,7 +29,7 @@ data_train_test_split = 0.75
 learning_rate = 1e-1
 weight_decay = 1e-6
 n_epochs = 10
-batch_size = 80
+batch_size = 100
 max_audio_duration = 5000 # Max duration of the files in milliseconds
 init_function = model_config.random_init
 act_func = "sigmoid"

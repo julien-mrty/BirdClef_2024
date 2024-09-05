@@ -37,11 +37,8 @@ def start_training(model, train_dataset, test_dataset, n_epochs, batch_size, dir
     print("Final pred : ", final_pred[20])
     print("Final pred : ", final_pred[40])
 
-    # Save the loss values of the model
-    train_tools.save_training_logs(model, directory_training_result_save)
-
-    # Plot the loss values recorded
-    train_tools.plot_loss_records(directory_training_result_save, model.name)
+    # Plot training results
+    train_tools.plot_training_results(model.logger)
 
     # Save the model
     train_tools.save_model(directory_model_save, model)

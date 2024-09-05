@@ -1,7 +1,8 @@
 import numpy as np
 import Model.model_tools as tools
 import Model.model_config as config_func
-import math
+from Logger import logger
+import sklearn.metrics
 
 
 #np.random.seed(42)  # For reproducibility
@@ -82,8 +83,7 @@ class ClassificationFullyConnectedNeuralNetwork:
         self.weight_decay = weight_decay
 
         # Loss computation
-        self.train_loss_coordinates = []
-        self.test_loss_coordinates = []
+        self.logger = logger.ModelTrainingLogger()
 
         # Initialization of NN layers
         self.initialize_layers()
@@ -151,29 +151,62 @@ class ClassificationFullyConnectedNeuralNetwork:
         if n_samples != target_output.shape[0]:
             raise ValueError(f"Input and target do not match: {n_samples} vs {target_output.shape[0]}.")
 
+        # Metrics performance variables
+        loss = []
+        model_class_index_prediction = []
+        target_class_index_values = []
+
         for batch_number, i in enumerate(range(0, n_samples, batch_size), start=1):
             # Slice the batches
             batch_input = input_feature[i:i + batch_size, :]
             batch_target = target_output[i:i + batch_size]
 
-            # Perform forward propagation and backpropagation on the current batch
+            # Perform forward-propagation and back-propagation on the current batch
             model_hypothesis = self.forward_propagation(batch_input)
             self.backpropagation(batch_input, batch_target)
 
+            # Get batch predictions and target values indexes
+            model_class_index_prediction_tmp, target_class_index_values_tmp = tools.get_predictions_and_target_indexes(model_hypothesis, batch_target)
+            model_class_index_prediction.extend(model_class_index_prediction_tmp)
+            target_class_index_values.extend(target_class_index_values_tmp)
+
             # Compute and store the loss for the current batch
-            loss = tools.compute_least_squared_cost_function(model_hypothesis, batch_target)
-            tuple_coordinates = (loss, current_epoch)
-            self.train_loss_coordinates.append(tuple_coordinates)
+            loss.append(tools.compute_least_squared_cost_function(model_hypothesis, batch_target))
 
+            # Get the batch classification report to display the batch accuracy
+            batch_classification_report = sklearn.metrics.classification_report(target_class_index_values,
+                                                                          model_class_index_prediction, labels=range(2),
+                                                                          zero_division=0, output_dict=True)
             # Print the training logs
-            self.print_training_logs(n_samples, n_epochs, current_epoch, batch_size, batch_number)
+            tools.print_batch_training_logs(loss, n_samples, n_epochs, current_epoch, batch_size, batch_number, batch_classification_report)
 
-    def test_model(self, current_epoch, batch_size, input_feature, target_output):
+
+        # Get the epoch classification report
+        classification_report = sklearn.metrics.classification_report(target_class_index_values,
+                                                                      model_class_index_prediction,
+                                                                      labels=range(self.n_neurons_by_layer[-1]),
+                                                                      zero_division=0,
+                                                                      output_dict=True)
+
+        confusion_matrix = sklearn.metrics.confusion_matrix(target_class_index_values,
+                                                                      model_class_index_prediction)
+
+        # Compute average epoch loss
+        avg_loss = np.mean(loss)
+
+        return avg_loss, classification_report, confusion_matrix
+
+    def validate_one_epoch(self, current_epoch, batch_size, input_feature, target_output):
         n_samples = input_feature.shape[0]
 
         if n_samples != target_output.shape[0]:
             raise ValueError(f"Input and target do not match: {n_samples} vs {target_output.shape[0]}.")
 
+        # Metrics performance variables
+        loss = []
+        model_class_index_prediction = []
+        target_class_index_values = []
+
         for batch_number, i in enumerate(range(0, n_samples, batch_size), start=1):
             # Slice the batches
             batch_input = input_feature[i:i + batch_size, :]
@@ -182,27 +215,37 @@ class ClassificationFullyConnectedNeuralNetwork:
             # Perform forward propagation and backpropagation on the current batch
             model_hypothesis = self.forward_propagation(batch_input)
 
-            # Compute and store the loss for the current batch
-            loss = tools.compute_least_squared_cost_function(model_hypothesis, batch_target)
-            tuple_coordinates = (loss, current_epoch)
-            self.test_loss_coordinates.append(tuple_coordinates)
+            # Get batch predictions and target values indexes
+            model_class_index_prediction_tmp, target_class_index_values_tmp = tools.get_predictions_and_target_indexes(model_hypothesis, batch_target)
+            model_class_index_prediction.extend(model_class_index_prediction_tmp)
+            target_class_index_values.extend(target_class_index_values_tmp)
 
-            # Print the training logs
-            self.print_test_logs(n_samples, batch_size, batch_number)
+            # Compute and store the loss for the current batch
+            loss.append(tools.compute_least_squared_cost_function(model_hypothesis, batch_target))
+
+
+        # Get the epoch classification report
+        classification_report = sklearn.metrics.classification_report(target_class_index_values,
+                                                                      model_class_index_prediction,
+                                                                      labels=range(self.n_neurons_by_layer[-1]),
+                                                                      zero_division=0, output_dict=True)
+
+        confusion_matrix = sklearn.metrics.confusion_matrix(target_class_index_values,
+                                                                      model_class_index_prediction)
+
+        # Compute average loss
+        avg_loss = np.mean(loss)
+
+        tools.print_validation_logs(avg_loss, classification_report)
+
+        return avg_loss, classification_report, confusion_matrix
 
     def train_and_test(self, n_epochs, batch_size, train_input_feature, train_target_output, test_input_feature, test_target_output):
         for epoch_number in range(n_epochs):
-            self.train_one_epoch(n_epochs, epoch_number, batch_size, train_input_feature, train_target_output)
-            self.test_model(epoch_number, batch_size, test_input_feature, test_target_output)
+            train_loss, train_report, train_confusion_matrix = self.train_one_epoch(n_epochs, epoch_number, batch_size, train_input_feature, train_target_output)
+            val_loss, val_report, val_confusion_matrix = self.validate_one_epoch(epoch_number, batch_size, test_input_feature, test_target_output)
 
-    def print_training_logs(self, n_samples, n_epochs, current_epoch, batch_size, batch_number):
-        n_batch = math.ceil(n_samples / batch_size)
-        avg_loss = np.mean(self.train_loss_coordinates)
+            # Log all the relevant training infos
+            self.logger.log_epoch((epoch_number +1), train_loss, train_report, val_loss, val_report, self.learning_rate, train_confusion_matrix, val_confusion_matrix)
 
-        print(f"TRAIN : Epoch : {current_epoch + 1}/{n_epochs}, Batch : {batch_number}/{n_batch}, Last loss : {self.train_loss_coordinates[-1][0]}Loss : {avg_loss}")
-
-    def print_test_logs(self, n_samples, batch_size, batch_number):
-        n_batch = math.ceil(n_samples / batch_size)
-        avg_loss = np.mean(self.test_loss_coordinates)
-
-        print(f"======== TEST : Batch : {batch_number}/{n_batch}, Last loss : {self.test_loss_coordinates[-1][0]}, Loss average : {avg_loss}")
+            tools.print_epoch_training_logs(self.logger, n_epochs)
