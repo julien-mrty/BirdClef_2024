@@ -8,10 +8,6 @@ This project involves building a fully connected neural network from scratch usi
 - [Features](#features)
 - [Design Patterns](#design-patterns)
 - [Data Preprocessing](#data-preprocessing)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Introduction
 
