@@ -10,9 +10,9 @@ import Train.train_tools as train_tools
 
 
 """ Directories paths and files names """
-directory_raw_train_audio = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/train_audio"
-train_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/train_birds_5_sample_all_dict"
-test_birds_sample_dict_save = "C:/Users/julie/Desktop/All/Important/Programmation/AI/BirdClef_Kaggle/Data/birds_samples/test_birds_5_sample_all_dict"
+directory_raw_train_audio = ""
+train_birds_sample_dict_save = ""
+test_birds_sample_dict_save = ""
 directory_training_result_save = "Training_results/Data/"
 directory_model_save = "Training_results/Models/"
 model_name = "Model01_5_birds"
