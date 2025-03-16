@@ -8,18 +8,9 @@ def start_training(model, train_dataset, test_dataset, n_epochs, batch_size, dir
 
     print("=========================== Training Started...")
 
-    """ Samples """
+    # Samples
     n_training_data = len(train_dataset.get_input_samples())
     print("Number of training data : ", n_training_data)
-
-
-    inital_prediction = model.forward_propagation(train_dataset.get_input_samples())
-    print("inital_prediction : ", inital_prediction[0])
-    print("Expected values : ", train_dataset.get_target_values()[0])
-    print("inital_prediction : ", inital_prediction[20])
-    print("Expected values : ", train_dataset.get_target_values()[20])
-    print("inital_prediction : ", inital_prediction[40])
-    print("Expected values : ", train_dataset.get_target_values()[40])
 
     # Train the NN
     model.train_and_test(
@@ -31,15 +22,27 @@ def start_training(model, train_dataset, test_dataset, n_epochs, batch_size, dir
         test_target_output=test_dataset.get_target_values()
     )
 
-    # Print result after training (I test the two classes)
-    final_pred = model.forward_propagation(train_dataset.get_input_samples())
-    print("Final pred : ", final_pred[0])
-    print("Final pred : ", final_pred[20])
-    print("Final pred : ", final_pred[40])
-
     # Plot training results
     train_tools.plot_training_results(model.logger)
 
     # Save the model
     train_tools.save_model(directory_model_save, model)
     print("=========================== End of training.\n")
+
+
+"""
+    inital_prediction = model.forward_propagation(train_dataset.get_input_samples())
+    print("inital_prediction : ", inital_prediction[0])
+    print("Expected values : ", train_dataset.get_target_values()[0])
+    print("inital_prediction : ", inital_prediction[20])
+    print("Expected values : ", train_dataset.get_target_values()[20])
+    print("inital_prediction : ", inital_prediction[40])
+    print("Expected values : ", train_dataset.get_target_values()[40])
+    
+    
+    # Print result after training (I test the two classes)
+    final_pred = model.forward_propagation(train_dataset.get_input_samples())
+    print("Final pred : ", final_pred[0])
+    print("Final pred : ", final_pred[20])
+    print("Final pred : ", final_pred[40])
+"""
